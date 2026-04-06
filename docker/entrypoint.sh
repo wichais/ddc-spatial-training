@@ -2,8 +2,6 @@
 set -e
 
 INIT_FLAG="/app/.state/.init_done"
-CSV_DIR="/app/.state"
-DATA_GEN="/app/data_generation/generate_ddc_data.py"
 SQL_RUNNER="python /app/run_sql.py"
 
 # ------------------------------------------------------------------
@@ -23,20 +21,11 @@ echo "  DDC Training: First-time initialization"
 echo "=============================================="
 
 # ------------------------------------------------------------------
-# Step 1: Generate synthetic patient data
+# Step 1: Run Course 1 SQL scripts
 # ------------------------------------------------------------------
 echo ""
-echo "[1/4] Generating synthetic patient data..."
-mkdir -p "$CSV_DIR"
-python "$DATA_GEN" \
-    --rows "${DDC_ROW_COUNT:-5000000}" \
-    --output "$CSV_DIR/ddc_patients.csv"
-
-# ------------------------------------------------------------------
-# Step 2: Run Course 1 SQL scripts
-# ------------------------------------------------------------------
-echo ""
-echo "[2/4] Running Course 1 SQL scripts..."
+echo "[1/2] Running Course 1 SQL scripts..."
+mkdir -p /app/.state
 $SQL_RUNNER \
     /app/sql/course_1/00_setup_data.sql \
     /app/sql/course_1/01_wow_then_geography.sql \
@@ -44,21 +33,11 @@ $SQL_RUNNER \
     /app/sql/course_1/03_hexbin_heatmap.sql
 
 # ------------------------------------------------------------------
-# Step 3: Run Course 2 SQL scripts + bulk load
+# Step 2: Generate visualization
 # ------------------------------------------------------------------
 echo ""
-echo "[3/4] Running Course 2 SQL scripts + bulk data load..."
-$SQL_RUNNER --csv-dir "$CSV_DIR" \
-    /app/sql/course_2/00_setup_data.sql \
-    /app/sql/workshop/load_bulk_data.sql \
-    /app/sql/course_2/02_projection_performance.sql \
-    /app/sql/course_2/03_scd_type2.sql
-
-# ------------------------------------------------------------------
-# Step 4: Generate visualization
-# ------------------------------------------------------------------
-echo ""
-echo "[4/4] Generating outbreak visualization..."
+echo "[2/2] Generating outbreak visualization..."
+mkdir -p /app/output
 cd /app/output
 python /app/notebooks/course_1/notebooks/visualize_outbreak.py || \
     echo "  [WARN] Visualization skipped (non-critical)"

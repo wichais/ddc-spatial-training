@@ -63,9 +63,6 @@ services:
     container_name: ddc-data-init
     volumes:
       - ./course_1/sql:/app/sql/course_1:ro
-      - ./course_2/sql:/app/sql/course_2:ro
-      - ./workshop:/app/sql/workshop:ro
-      - ./data_generation:/app/data_generation:ro
       - training-data:/app/.state
     environment:
       - PYTHONPATH=/app
@@ -75,7 +72,6 @@ services:
       - VERTICA_PASSWORD=${VERTICA_PASSWORD:-}
       - VERTICA_DATABASE=${VERTICA_DATABASE:-VMart}
       - VERTICA_SCHEMA=${VERTICA_SCHEMA:-ddc_training}
-      - DDC_ROW_COUNT=${DDC_ROW_COUNT:-5000000}
     networks:
       - ddc-training-net
     depends_on:

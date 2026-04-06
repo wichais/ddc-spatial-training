@@ -17,9 +17,6 @@ RUN pip install --no-cache-dir \
 # Bake course materials into the image (each trainee gets their own copy)
 COPY course_1/notebooks/ /home/jovyan/course_1/notebooks/
 COPY course_1/sql/ /home/jovyan/course_1/sql/
-COPY course_2/notebooks/ /home/jovyan/course_2/notebooks/
-COPY course_2/sql/ /home/jovyan/course_2/sql/
-COPY workshop/ /home/jovyan/workshop/
 COPY ddc_helpers.py /home/jovyan/ddc_helpers.py
 
 EXPOSE 8888

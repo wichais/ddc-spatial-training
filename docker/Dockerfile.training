@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir \
     vertica-python \
     pandas \
     numpy \
-    faker \
     folium \
     shapely \
     matplotlib
