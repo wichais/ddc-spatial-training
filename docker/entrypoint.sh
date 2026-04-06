@@ -49,7 +49,7 @@ $SQL_RUNNER \
 echo ""
 echo "[3/4] Running Course 2 SQL scripts + bulk data load..."
 $SQL_RUNNER --csv-dir "$CSV_DIR" \
-    /app/sql/course_2/01_dimensional_model.sql \
+    /app/sql/course_2/00_setup_data.sql \
     /app/sql/workshop/load_bulk_data.sql \
     /app/sql/course_2/02_projection_performance.sql \
     /app/sql/course_2/03_scd_type2.sql
