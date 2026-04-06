@@ -50,26 +50,17 @@ docker compose down -v    # stop + delete all data
 
 ### 1. Build the trainee image
 
+Course notebooks are baked into this image so each trainee gets their own writable copy.
+
 ```bash
 docker build -t courses-trainee:latest -f docker/Dockerfile.trainee .
 ```
 
-### 2. Set host path and start
+### 2. Start
 
-**Linux:**
 ```bash
-export HOST_COURSE_PATH=$(pwd)
 docker compose -f docker-compose-training-40.yaml up -d
 ```
-
-**Windows (Docker Desktop):**
-```powershell
-$env:HOST_COURSE_PATH = "/d/path/to/ddc-spatial-training"
-docker compose -f docker-compose-training-40.yaml up -d
-```
-
-Replace `/d/path/to/...` with the Docker Desktop style path to this directory
-(e.g., `D:\Projects\ddc-spatial-training` becomes `/d/Projects/ddc-spatial-training`).
 
 ### 3. Wait for data initialization
 

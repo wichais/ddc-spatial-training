@@ -108,8 +108,6 @@ services:
       - VERTICA_PASSWORD=${VERTICA_PASSWORD:-}
       - VERTICA_DATABASE=${VERTICA_DATABASE:-VMart}
       - VERTICA_SCHEMA=${VERTICA_SCHEMA:-ddc_training}
-      # Host path to course materials (DockerSpawner mounts from host, not hub)
-      - HOST_COURSE_PATH=${HOST_COURSE_PATH:-}
     networks:
       - ddc-training-net
     depends_on:

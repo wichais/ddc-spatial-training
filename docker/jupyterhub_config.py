@@ -51,28 +51,12 @@ c.DockerSpawner.mem_guarantee = '512M'
 # ===========================================================================
 # Volume Mounts
 # ===========================================================================
-# DockerSpawner mounts from the Docker HOST, not from the JupyterHub container.
-# On Docker Desktop (Windows/Mac), host paths must be shared in Docker settings.
-#
-# HOST_COURSE_PATH should be set to the host path of the courses/ directory.
-# e.g. /d/OneDrive/.../courses  (Docker Desktop uses /d/ for D:\)
-
-HOST_PATH = os.environ.get('HOST_COURSE_PATH', '')
-
-if HOST_PATH:
-    c.DockerSpawner.volumes = {
-        'jupyterhub-user-{username}': '/home/jovyan/work',
-        f'{HOST_PATH}/course_1': {'bind': '/home/jovyan/course_1', 'mode': 'ro'},
-        f'{HOST_PATH}/course_2': {'bind': '/home/jovyan/course_2', 'mode': 'ro'},
-        f'{HOST_PATH}/workshop': {'bind': '/home/jovyan/workshop', 'mode': 'ro'},
-        f'{HOST_PATH}/ddc_helpers.py': {'bind': '/home/jovyan/ddc_helpers.py', 'mode': 'ro'},
-    }
-else:
-    # Fallback: only persistent work volume (no shared materials)
-    c.DockerSpawner.volumes = {
-        'jupyterhub-user-{username}': '/home/jovyan/work',
-    }
-    print("WARNING: HOST_COURSE_PATH not set. Trainees won't see course notebooks.")
+# Course materials are baked into the trainee image (Dockerfile.trainee).
+# Each trainee gets their own writable copy.
+# Only mount a persistent volume for the work/ directory.
+c.DockerSpawner.volumes = {
+    'jupyterhub-user-{username}': '/home/jovyan/work',
+}
 
 # ===========================================================================
 # Environment Variables (Vertica Connection)
