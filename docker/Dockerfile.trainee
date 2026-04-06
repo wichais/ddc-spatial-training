@@ -1,0 +1,20 @@
+FROM python:3.11-slim
+
+WORKDIR /home/jovyan
+
+# Install jupyterhub (for jupyterhub-singleuser) + training dependencies
+RUN pip install --no-cache-dir \
+    jupyterhub \
+    jupyterlab \
+    jupyterlab-rise \
+    vertica-python \
+    pandas \
+    numpy \
+    folium \
+    shapely \
+    matplotlib
+
+EXPOSE 8888
+
+# DockerSpawner runs jupyterhub-singleuser which handles auth + ip binding
+CMD ["jupyterhub-singleuser", "--allow-root"]

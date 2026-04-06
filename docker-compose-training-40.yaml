@@ -1,0 +1,123 @@
+# ===========================================================================
+# DDC Training Environment - Multi-Trainee JupyterHub
+# ===========================================================================
+# Architecture:
+#   - 1 Vertica CE database (shared)
+#   - 1 data-init container (runs once to load SQL)
+#   - 1 JupyterHub (manages trainee containers)
+#   - Up to 40 spawned Jupyter containers (1 per active trainee)
+#
+# Usage:
+#   docker compose -f docker-compose-training-40.yaml up -d
+#   Access: http://localhost:8000
+#   Login:  trainee01 / trainee123  (through trainee40)
+#   Admin:  instructor / trainee123
+# ===========================================================================
+
+networks:
+  ddc-training-net:
+    name: ddc-training-net
+    driver: bridge
+
+volumes:
+  vertica-data:
+    name: ddc-vertica-data
+  training-data:
+    name: ddc-training-data
+  jupyterhub-data:
+    name: ddc-jupyterhub-data
+
+services:
+  # =========================================================================
+  # Container 1: Vertica CE Database
+  # =========================================================================
+  vertica-ce:
+    image: vertica/vertica-ce:latest
+    container_name: ddc-vertica
+    hostname: ddc-vertica
+    ports:
+      - "${VERTICA_EXTERNAL_PORT:-5433}:5433"
+      - "5444:5444"
+    volumes:
+      - vertica-data:/data
+    environment:
+      - APP_DB_USER=${VERTICA_USER:-dbadmin}
+      - APP_DB_PASSWORD=${VERTICA_PASSWORD:-}
+    networks:
+      - ddc-training-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/opt/vertica/bin/vsql", "-U", "dbadmin", "-c", "SELECT 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
+  # =========================================================================
+  # Container 2: Data Initialization (runs once, then exits)
+  # =========================================================================
+  data-init:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.training
+    container_name: ddc-data-init
+    volumes:
+      - ./course_1/sql:/app/sql/course_1:ro
+      - ./course_2/sql:/app/sql/course_2:ro
+      - ./workshop:/app/sql/workshop:ro
+      - ./data_generation:/app/data_generation:ro
+      - training-data:/app/.state
+    environment:
+      - PYTHONPATH=/app
+      - VERTICA_HOST=ddc-vertica
+      - VERTICA_PORT=5433
+      - VERTICA_USER=${VERTICA_USER:-dbadmin}
+      - VERTICA_PASSWORD=${VERTICA_PASSWORD:-}
+      - VERTICA_DATABASE=${VERTICA_DATABASE:-VMart}
+      - VERTICA_SCHEMA=${VERTICA_SCHEMA:-ddc_training}
+      - DDC_ROW_COUNT=${DDC_ROW_COUNT:-5000000}
+    networks:
+      - ddc-training-net
+    depends_on:
+      vertica-ce:
+        condition: service_healthy
+    entrypoint: ["/app/entrypoint.sh"]
+    restart: "no"
+
+  # =========================================================================
+  # Container 3: JupyterHub (multi-user management)
+  # =========================================================================
+  # Access: http://localhost:8000
+  # Login: trainee01/trainee123 ... trainee40/trainee123
+  # Admin: instructor/trainee123
+  # =========================================================================
+  jupyterhub:
+    image: jupyterhub/jupyterhub:4.0
+    container_name: ddc-jupyterhub
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docker/jupyterhub_config.py:/srv/jupyterhub/jupyterhub_config.py:ro
+      - jupyterhub-data:/srv/jupyterhub/data
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    environment:
+      - DOCKER_NETWORK_NAME=ddc-training-net
+      - VERTICA_HOST=ddc-vertica
+      - VERTICA_PORT=5433
+      - VERTICA_USER=${VERTICA_USER:-dbadmin}
+      - VERTICA_PASSWORD=${VERTICA_PASSWORD:-}
+      - VERTICA_DATABASE=${VERTICA_DATABASE:-VMart}
+      - VERTICA_SCHEMA=${VERTICA_SCHEMA:-ddc_training}
+      # Host path to course materials (DockerSpawner mounts from host, not hub)
+      - HOST_COURSE_PATH=${HOST_COURSE_PATH:-}
+    networks:
+      - ddc-training-net
+    depends_on:
+      vertica-ce:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      bash -c "
+        pip install dockerspawner jupyterhub-idle-culler &&
+        jupyterhub -f /srv/jupyterhub/jupyterhub_config.py
+      "

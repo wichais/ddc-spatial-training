@@ -1,0 +1,101 @@
+# ===========================================================================
+# DDC Spatial Epidemiology Training -- Docker Compose
+# ===========================================================================
+# Two containers:
+#   1. vertica-ce  -- Vertica database (always running)
+#   2. training    -- Jupyter Lab + auto-init (data gen, SQL setup, viz)
+#
+# Usage:
+#   docker compose up -d              # start both containers
+#   docker compose up -d vertica-ce   # start database only
+#   docker compose logs -f training   # watch init progress
+#
+# First run takes ~5-8 minutes (data gen + SQL init).
+# Subsequent runs start Jupyter immediately.
+#
+# Jupyter Lab: http://localhost:8888
+# Vertica:     vsql -h localhost -p 5433 -U dbadmin -d VMart
+# ===========================================================================
+
+networks:
+  ddc-training-net:
+    name: ddc-training-net
+    driver: bridge
+
+volumes:
+  vertica-data:
+    name: ddc-vertica-data
+  training-data:
+    name: ddc-training-data
+
+services:
+  # =========================================================================
+  # Container 1: Vertica CE Database
+  # =========================================================================
+  vertica-ce:
+    image: vertica/vertica-ce:latest
+    container_name: ddc-vertica
+    hostname: ddc-vertica
+    ports:
+      - "${VERTICA_EXTERNAL_PORT:-5433}:5433"
+      - "5444:5444"
+    volumes:
+      - vertica-data:/data
+    environment:
+      - APP_DB_USER=${VERTICA_USER:-dbadmin}
+      - APP_DB_PASSWORD=${VERTICA_PASSWORD:-}
+    networks:
+      - ddc-training-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/opt/vertica/bin/vsql", "-U", "dbadmin", "-c", "SELECT 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
+  # =========================================================================
+  # Container 2: Training (Jupyter Lab + auto-init)
+  # =========================================================================
+  # On first start: generates data, runs all SQL scripts, then starts Jupyter.
+  # On subsequent starts: skips init, starts Jupyter immediately.
+  # =========================================================================
+  training:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.training
+    container_name: ddc-training
+    ports:
+      - "8888:8888"
+    volumes:
+      # SQL scripts (read-only)
+      - ./course_1/sql:/app/sql/course_1:ro
+      - ./course_2/sql:/app/sql/course_2:ro
+      - ./workshop:/app/sql/workshop:ro
+      # Data generation source (read-only)
+      - ./data_generation:/app/data_generation:ro
+      # Notebooks (read-write for interactive editing)
+      - ./course_1:/app/notebooks/course_1
+      - ./course_2:/app/notebooks/course_2
+      - ./workshop:/app/notebooks/workshop:ro
+      # Shared helper module for notebooks
+      - ./ddc_helpers.py:/app/ddc_helpers.py:ro
+      # Output (viz maps, generated CSV)
+      - ./output:/app/output
+      # Persistent volume for init flag + generated data
+      - training-data:/app/.state
+    environment:
+      - PYTHONPATH=/app
+      - VERTICA_HOST=ddc-vertica
+      - VERTICA_PORT=5433
+      - VERTICA_USER=${VERTICA_USER:-dbadmin}
+      - VERTICA_PASSWORD=${VERTICA_PASSWORD:-}
+      - VERTICA_DATABASE=${VERTICA_DATABASE:-VMart}
+      - VERTICA_SCHEMA=${VERTICA_SCHEMA:-ddc_training}
+      - DDC_ROW_COUNT=${DDC_ROW_COUNT:-5000000}
+    networks:
+      - ddc-training-net
+    depends_on:
+      vertica-ce:
+        condition: service_healthy
+    restart: unless-stopped

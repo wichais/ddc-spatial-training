@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Generated output (rebuild with scripts)
+output/
+
+# Environment
+.env
+.venv/
+venv/
+
+# Docker state
+*.state/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large files
+*.pdf
+*.csv
+
+# Local config
+.claude/

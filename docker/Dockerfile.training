@@ -1,0 +1,27 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install all training dependencies in one layer
+RUN pip install --no-cache-dir \
+    jupyterlab \
+    jupyterlab-rise \
+    vertica-python \
+    pandas \
+    numpy \
+    faker \
+    folium \
+    shapely \
+    matplotlib
+
+# Copy the SQL executor and entrypoint
+COPY docker/run_sql.py /app/run_sql.py
+COPY docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Jupyter config: no token for training ease
+ENV JUPYTER_TOKEN=""
+
+EXPOSE 8888
+
+ENTRYPOINT ["/app/entrypoint.sh"]
