@@ -139,6 +139,10 @@ def execute_sql_file(conn, filepath, csv_dir=None):
             # Non-critical: already exists, etc.
             if 'already exists' in err_msg.lower():
                 continue
+            # Critical errors for DDL/DML: fail immediately
+            if stmt_upper.startswith(('CREATE ', 'INSERT ', 'COPY ')):
+                print(f"  [ERROR] {err_msg[:200]}")
+                raise
             print(f"  [WARN] {err_msg[:200]}")
 
     # Commit after each file
