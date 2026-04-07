@@ -33,7 +33,8 @@ SET SEARCH_PATH TO ddc_training, public, v_catalog, v_monitor;
 -- Mix of large Bangkok hospitals and regional facilities.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS hospitals (
+DROP TABLE IF EXISTS hospitals;
+CREATE TABLE hospitals (
     id            INT PRIMARY KEY,
     name          VARCHAR(200),
     province      VARCHAR(100),
@@ -70,7 +71,8 @@ INSERT INTO hospitals VALUES (15, 'Mae Sai Hospital',                   'Chiang 
 --   - Chiang Rai: border area near Mae Sai
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS dengue_cases (
+DROP TABLE IF EXISTS dengue_cases;
+CREATE TABLE dengue_cases (
     case_id        INT PRIMARY KEY,
     patient_age    INT,
     gender         VARCHAR(10),
@@ -124,7 +126,8 @@ INSERT INTO dengue_cases VALUES (30,  9, 'F', '2024-09-10', 'DF',  ST_GeomFromTe
 -- are located. DDC prioritizes schools for Aedes mosquito inspections.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS schools (
+DROP TABLE IF EXISTS schools;
+CREATE TABLE schools (
     id       INT PRIMARY KEY,
     name     VARCHAR(200),
     district VARCHAR(100),
@@ -153,7 +156,8 @@ INSERT INTO schools VALUES (10, 'Triam Udom Suksa School',          'Pathum Wan'
 -- These approximations are sufficient for training exercises.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS province_boundaries (
+DROP TABLE IF EXISTS province_boundaries;
+CREATE TABLE province_boundaries (
     province_code VARCHAR(10) PRIMARY KEY,
     province_name VARCHAR(100),
     boundary      GEOMETRY
