@@ -185,8 +185,8 @@ def load_from_vertica():
         SELECT
             name,
             province,
-            ST_X(geog)  AS lon,
-            ST_Y(geog)  AS lat
+            ST_X(geom)  AS lon,
+            ST_Y(geom)  AS lat
         FROM hospitals
     """)
     hosp_rows = cur.fetchall()
@@ -201,8 +201,8 @@ def load_from_vertica():
         SELECT
             name,
             district,
-            ST_X(geog)  AS lon,
-            ST_Y(geog)  AS lat
+            ST_X(geom)  AS lon,
+            ST_Y(geom)  AS lat
         FROM schools
     """)
     school_rows = cur.fetchall()

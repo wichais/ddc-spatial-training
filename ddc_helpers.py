@@ -5,7 +5,7 @@ Usage (students only need to know this):
     from ddc_helpers import run_query, show_on_map, show_buffers, show_heatmap, explain_query
 
     run_query("SELECT * FROM hospitals")
-    show_on_map("SELECT name, ST_AsText(geog) AS wkt FROM hospitals")
+    show_on_map("SELECT name, ST_AsText(geom) AS wkt FROM hospitals")
 """
 
 import os
